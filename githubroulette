@@ -4,6 +4,7 @@ import urllib2
 import json
 import sys
 import random
+import getpass
 
 # TODO find issues not in your repos
 # TODO weight based on various things
@@ -20,7 +21,7 @@ if __name__ == '__main__' :
 	try :
 		username = sys.argv[1]
 	except IndexError :
-		usage()
+		username = getpass.getuser()
 	
 	try :
 		n = int(sys.argv[2])
