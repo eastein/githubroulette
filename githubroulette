@@ -30,7 +30,16 @@ if __name__ == '__main__' :
 	except IndexError :
 		n = 1
 	
-	repos_fa = json.load(urllib2.urlopen('https://api.github.com/users/%s/repos' % username))
+	try :
+		stream = urllib2.urlopen('https://api.github.com/users/%s/repos' % username)
+	except urllib2.HTTPError, e :
+		if e.getcode() == 404 :
+			print 'github does not know who %s is.\n' % username
+			usage()
+		else :
+			raise
+
+	repos_fa = json.load(stream)
 	repos = [r['name'] for r in repos_fa if r['open_issues'] > 0]
 	del repos_fa
 
