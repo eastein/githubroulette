@@ -5,6 +5,7 @@ import json
 import sys
 import random
 import getpass
+from concurrent import futures
 
 # TODO find issues not in your repos
 # TODO weight based on various things
@@ -13,9 +14,18 @@ import getpass
  # ..etc?
 # TODO work with private repos, etc.
 
+CONCURRENCY = 15
+
 def usage() :
 	print 'usage: githubroulette <username> [n=number of issues to show]'
 	sys.exit(1)
+
+def get_open_issues(username, repo) :
+	issues_fa = json.load(urllib2.urlopen('https://api.github.com/repos/%s/%s/issues' % (username, repo)))
+	return [
+	         ('https://github.com/%s/%s/issues/%d' % (username, repo, issue['number']), issue['title'])
+	         for issue in issues_fa if issue['state'] == 'open'
+	       ]
 
 if __name__ == '__main__' :
 	try :
@@ -44,12 +54,18 @@ if __name__ == '__main__' :
 	repos = [r['name'] for r in repos_fa if r['open_issues'] > 0]
 	del repos_fa
 
-	open_issues = list()
+	fetching_issues = list()
+
+	tp = futures.ThreadPoolExecutor(max_workers=CONCURRENCY)
 
 	for repo in repos :
-		issues_fa = json.load(urllib2.urlopen('https://api.github.com/repos/%s/%s/issues' % (username, repo)))
-		open_issues += [('https://github.com/%s/%s/issues/%d' % (username, repo, issue['number']), issue['title']) for issue in issues_fa if issue['state'] == 'open']
+		fetching_issues.append(tp.submit(get_open_issues, username, repo))
 
+	open_issues = list()
+
+	for fetching_issue in fetching_issues :
+		open_issues += fetching_issue.result()
+	
 	if not open_issues :
 		print 'congratulations, you are free of issues. go outside.'
 		sys.exit(0)
