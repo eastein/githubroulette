@@ -39,7 +39,7 @@ if __name__ == '__main__' :
 			print 'n must be >= 1\n'
 			usage()
 	except IndexError :
-		n = 1
+		n = 5
 	
 	try :
 		stream = urllib2.urlopen('https://api.github.com/users/%s/repos' % username)
